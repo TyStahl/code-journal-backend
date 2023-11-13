@@ -3,49 +3,45 @@ export type UnsavedEntry = {
   notes: string;
   photoUrl: string;
 };
+
 export type Entry = UnsavedEntry & {
   entryId: number;
 };
 
-let data = {
-  entries: [] as Entry[],
-  nextEntryId: 1,
-};
-
-window.addEventListener('beforeunload', function () {
-  const dataJSON = JSON.stringify(data);
-  localStorage.setItem('code-journal-data', dataJSON);
-});
-
-const localData = localStorage.getItem('code-journal-data');
-if (localData) {
-  data = JSON.parse(localData);
+export async function readEntries(): Promise<Entry[]> {
+  const res = await fetch('/api/entries');
+  if (!res.ok) throw new Error(`An error occured: ${res.status}`);
+  const entries: Entry[] = await res.json();
+  return entries;
 }
 
-export function readEntries(): Entry[] {
-  return data.entries;
-}
+export async function addEntry(entry: UnsavedEntry): Promise<Entry> {
+  const res = await fetch('/api/entries', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(entry),
+  });
+  console.log(res);
+  if (!res.ok) throw new Error(`An error occurred: ${res.status}`);
+  const newEntry: Entry = await res.json();
+  console.log(newEntry);
 
-export function addEntry(entry: UnsavedEntry): Entry {
-  const newEntry = {
-    ...entry,
-    entryId: data.nextEntryId++,
-  };
-  data.entries.unshift(newEntry);
   return newEntry;
 }
 
-export function updateEntry(entry: Entry): Entry {
-  const newEntries = data.entries.map((e) =>
-    e.entryId === entry.entryId ? entry : e
-  );
-  data.entries = newEntries;
+export async function updateEntry(entry: Entry): Promise<Entry> {
+  const entryId = entry.entryId;
+  const res = await fetch(`/api/entries/${entryId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(entry),
+  });
+  if (!res.ok) throw new Error(`An error occurred: ${res.status}`);
+  entry = await res.json();
   return entry;
 }
 
-export function removeEntry(entryId: number): void {
-  const updatedArray = data.entries.filter(
-    (entry) => entry.entryId !== entryId
-  );
-  data.entries = updatedArray;
+export async function removeEntry(entryId: number): Promise<void> {
+  const res = await fetch(`/api/entries/${entryId}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error(`An error occurred: ${res.status}`);
 }
