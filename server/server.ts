@@ -65,10 +65,13 @@ app.get('/api/entries/:entryId', async (req, res, next) => {
 app.post('/api/entries', async (req, res, next) => {
   try {
     const {title, notes, photoUrl} = req.body;
-    console.log (title, notes);
+    if (!title || !notes || !photoUrl){
+      throw new ClientError(400, 'missing required field')
+    }
+    console.log (title, notes, photoUrl);
     const sql = `
-      insert into "entries" (title, notes, photoUrl)
-      values ($1, $2, ,$3)
+      insert into "entries" ("title", "notes", "photoUrl")
+      values ($1, $2, $3)
       returning *
     `;
     const params = [title, notes, photoUrl];
@@ -86,15 +89,21 @@ app.post('/api/entries', async (req, res, next) => {
 app.put('/api/entries/:entryId', async (req, res, next) => {
   try {
     const entryId = Number(req.params.entryId);
+    console.log(entryId)
+    const {title, notes, photoUrl} = req.body;
+    console.log(title, notes, photoUrl);
     if (!entryId) {
       throw new ClientError(400, 'invalid entryId');
     }
     const sql = `
-      select *
-      from "entries"
-      where "entryId" = $1
+      update "entries"
+      set "title" = $1,
+          "notes" = $2,
+          "photoUrl" =$3
+      where "entryId" = $4
+      returning *
     `;
-    const params = [entryId];
+    const params = [title, notes, photoUrl, entryId];
     const result = await db.query<Entry>(sql, params);
     if (!result.rows[0]) {
       throw new ClientError(404, 'no entry at this id');
@@ -113,9 +122,9 @@ app.delete('/api/entries/:entryId', async (req, res, next) => {
       throw new ClientError(400, 'invalid entryId');
     }
     const sql = `
-      select *
-      from "entries"
+      delete from "entries"
       where "entryId" = $1
+      returning *
     `;
     const params = [entryId];
     const result = await db.query<Entry>(sql, params);

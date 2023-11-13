@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { Entry, addEntry, removeEntry, updateEntry } from './data';
 
 /**
@@ -15,6 +15,7 @@ export default function EntryForm({ entry, onSubmit }: Props) {
   const [photoUrl, setPhotoUrl] = useState(entry?.photoUrl ?? '');
   const [notes, setNotes] = useState(entry?.notes ?? '');
   const [isDeleting, setIsDeleting] = useState(false);
+
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
