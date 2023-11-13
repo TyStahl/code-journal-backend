@@ -42,7 +42,7 @@ export async function addEntry(entry: UnsavedEntry): Promise<Entry> {
   //   entryId: data.nextEntryId++,
   // };
   // data.entries.unshift(newEntry);
-  const res = await fetch('api/entries/:entryId', {method:'post'})
+  const res = await fetch('api/entries/:entryId', {method:'post' body: entry})
   if (!res.ok) throw new Error(`An error occurred: ${res.status}`)
   const newEntry: Entry = await res.json();
 
